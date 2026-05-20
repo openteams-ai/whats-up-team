@@ -366,10 +366,14 @@ def collect_prs(
                     next_url = response.links.get("next", {}).get("url")
 
             for pr in items:
-                if "openteams-ai/" in pr["repository_url"]:
+                if "openteams-ai/" in pr["repository_url"].lower():
                     continue  # Skip PRs in openteams-ai org
-                if "quansight/" in pr["repository_url"]:
+                if "quansight/" in pr["repository_url"].lower():
                     continue  # Skip PRs in quansight org
+                if "quansight-labs/" in pr["repository_url"].lower():
+                    continue  # Skip PRs in quansight-labs org
+                if f"{member}/" in pr["repository_url"].lower():
+                    continue  # Skip personal repos
 
                 if (
                     "conda-forge/" in pr["repository_url"]
