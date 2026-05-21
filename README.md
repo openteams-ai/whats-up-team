@@ -67,7 +67,7 @@ To use data from firestore
 ```
 $ cd whats-up
 
-$ REACT_APP_APP_ID=<app id> REACT_APP_MSG_SENDER_ID=<sender id> REACT_APP_FIREBASE_API_KEY=<api key> REACT_APP_FIREBASE_AUTH_DOMAIN=<auth domain> REACT_APP_FIREBASE_PROJECT_ID=<project id> REACT_APP_FIREBASE_DATABASE_ID=<databse id> pixi run -e frontend npm start
+$ REACT_APP_FIREBASE_API_KEY=<api key> REACT_APP_FIREBASE_AUTH_DOMAIN=<auth domain> REACT_APP_FIREBASE_PROJECT_ID=<project id> REACT_APP_FIREBASE_DATABASE_ID=<databse id> pixi run -e frontend npm start
 ```
 
 ---
