@@ -17,10 +17,16 @@ function App() {
   useEffect(() => {
     const fetchPRs = async () => {
       try {
-        const snapshot = await getDocs(collection(db, 'prs'));
-        const data = snapshot.docs.map((doc) => doc.data());
+        let data;
+        if (process.env.REACT_APP_USE_LOCAL_DATA === 'true') {
+          const response = await fetch('/prs.json');
+          if (!response.ok) throw new Error('Failed to load PR data');
+          data = await response.json();
+        } else {
+          const snapshot = await getDocs(collection(db, 'prs'));
+          data = snapshot.docs.map((doc) => doc.data());
+        }
         setPrsData(data);
-
         const today = new Date();
         const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         setEndDate(today.toISOString().split('T')[0]);
