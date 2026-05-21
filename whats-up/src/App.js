@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 import './App.css';
 import Statistics from './components/Statistics';
 import TopSecurityPackages from './components/TopSecurityPackages';
@@ -15,14 +17,16 @@ function App() {
   useEffect(() => {
     const fetchPRs = async () => {
       try {
-        const response = await fetch('/prs.json');
-        if (!response.ok) {
-          throw new Error('Failed to load PR data');
+        let data;
+        if (process.env.REACT_APP_USE_LOCAL_DATA === 'true') {
+          const response = await fetch('/prs.json');
+          if (!response.ok) throw new Error('Failed to load PR data');
+          data = await response.json();
+        } else {
+          const snapshot = await getDocs(collection(db, 'prs'));
+          data = snapshot.docs.map((doc) => doc.data());
         }
-        const data = await response.json();
         setPrsData(data);
-        
-        // Set default dates: end date = today, start date = 30 days ago
         const today = new Date();
         const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         setEndDate(today.toISOString().split('T')[0]);
