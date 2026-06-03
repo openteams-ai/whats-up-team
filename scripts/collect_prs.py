@@ -422,17 +422,38 @@ def main():
         action='store_true',
         help="Upload to firestore database",
     )
+    parser.add_argument(
+        "--start-date",
+        default=(datetime.today() - timedelta(days=7)).strftime("%Y-%m-%d"),
+        metavar="YYYY-MM-DD",
+        help="Start date for PR search (inclusive, default: 7 days ago)",
+    )
+    parser.add_argument(
+        "--end-date",
+        default=(datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d"),
+        metavar="YYYY-MM-DD",
+        help="End date for PR search (inclusive, default: today)",
+    )
 
     args = parser.parse_args()
+
+    try:
+        start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
+    except ValueError:
+        parser.error(f"Invalid --start-date '{args.start_date}': must be in YYYY-MM-DD format")
+
+    try:
+        end_date = datetime.strptime(args.end_date, "%Y-%m-%d")
+    except ValueError:
+        parser.error(f"Invalid --end-date '{args.end_date}': must be in YYYY-MM-DD format")
+
+    if end_date < start_date:
+        parser.error(f"--end-date ({args.end_date}) must be after --start-date ({args.start_date})")
 
     # Initialize zero-shot classifier
     print("Loading zero-shot classification model...")
     classifier = pipeline("zero-shot-classification", model="MoritzLaurer/ModernBERT-large-zeroshot-v2.0")
     print("Model loaded!\n")
-
-    # Example: Last N days
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=5)
 
     print(f"Collecting PRs from {start_date.date()} to {end_date.date()}")
     print()
