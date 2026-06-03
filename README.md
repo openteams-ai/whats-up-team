@@ -28,7 +28,7 @@ $ pixi run find-my-team
 
 #### 2. collect prs.
 
-Use the output from the previous step to collect important information about all the PRs those users have made in the past 30 days. Run the pixi task
+Use the output from the previous step to collect important information about all the PRs those users have made in the past 7 days. Run the pixi task
 
 ```
 $ pixi run collect-prs
@@ -40,6 +40,12 @@ Note, you may run into rate limits with the github api. In order to resolve this
 
 ```
 $ GITHUB_TOKEN=$GITHUB_TOKEN pixi run collect-prs 
+```
+
+You may also collect prs over a given time frame by specifying the `--start-date` and `--end-date` in the form YYYY-MM-DD. For example
+
+```
+$ pixi run collect-prs --start-date 2025-01-01 --end-date 2026-01-01
 ```
 
 This uses [zero-shot classification](https://huggingface.co/docs/inference-providers/tasks/zero-shot-classification) to determine if a pr is a security or cve related fix based on the pr title and description.
