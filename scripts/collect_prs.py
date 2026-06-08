@@ -3,6 +3,7 @@ import re
 import os
 import sys
 import argparse
+import time
 from datetime import datetime, timedelta
 import requests
 from transformers import pipeline
@@ -11,6 +12,24 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 
 SECURITY_RELATED_CLASSIFICATIONS = ["security"]
+GH_API_REQUEST_DELAY = os.environ.get("GH_API_REQUEST_DELAY", 15)  # seconds
+
+
+def get_with_backoff(url, headers, params=None, max_retries=3):
+    delay = GH_API_REQUEST_DELAY
+    for attempt in range(max_retries):
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 429 or response.status_code == 403 or response.status_code >= 500:
+            if attempt == max_retries - 1:
+                response.raise_for_status()
+            retry_after = int(response.headers.get("Retry-After", delay))
+            print(f"Rate limited or server error ({response.status_code}), retrying {url} in {retry_after}s...")
+            time.sleep(retry_after)
+            delay = min(delay * 2, 60)
+            continue
+        response.raise_for_status()
+        return response
+    return response
 
 GITHUB_HEADERS = {
     "Accept": "application/vnd.github.v3+json",
@@ -359,8 +378,7 @@ def collect_prs(
                 next_url = url
                 next_params = {"q": query, "sort": "created", "order": "desc", "per_page": 100}
                 while next_url:
-                    response = requests.get(next_url, headers=headers, params=next_params)
-                    response.raise_for_status()
+                    response = get_with_backoff(next_url, headers=headers, params=next_params)
                     items.extend(response.json().get("items", []))
                     next_params = None
                     next_url = response.links.get("next", {}).get("url")

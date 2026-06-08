@@ -48,6 +48,11 @@ You may also collect prs over a given time frame by specifying the `--start-date
 $ pixi run collect-prs --start-date 2025-01-01 --end-date 2026-01-01
 ```
 
+> [!TIP]
+> In you find that you are getting rate limited by the Github api you can try:
+>  1. ensuring you have set the `GTIHUB_TOKEN` env var
+>  2. increase (or decrease) the delay between retrying requests by setting `GH_API_REQUEST_DELAY`
+
 This uses [zero-shot classification](https://huggingface.co/docs/inference-providers/tasks/zero-shot-classification) to determine if a pr is a security or cve related fix based on the pr title and description.
 
 ##### Upload to firestore
