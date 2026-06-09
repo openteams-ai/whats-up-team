@@ -390,7 +390,7 @@ def collect_prs(
                     continue  # Skip PRs in quansight org
                 if "quansight-labs/" in pr["repository_url"].lower():
                     continue  # Skip PRs in quansight-labs org
-                if f"{member}/" in pr["repository_url"].lower():
+                if f"{member}/".lower() in pr["repository_url"].lower():
                     continue  # Skip personal repos
 
                 if (
