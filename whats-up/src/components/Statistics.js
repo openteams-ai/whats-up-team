@@ -2,8 +2,8 @@ import React from 'react';
 
 function Statistics({ prsData }) {
   const uniqueMembers = new Set(prsData.map(pr => pr.author)).size;
+  const uniqueOrgs = new Set(prsData.map(pr => pr.org).filter(Boolean)).size;
   const totalPRs = prsData.length;
-  const securityPRs = prsData.filter(pr => pr.contribution_classification === 'security').length;
   const openPRs = prsData.filter(pr => pr.state === 'open').length;
 
   return (
@@ -15,12 +15,12 @@ function Statistics({ prsData }) {
           <p>Team Members</p>
         </div>
         <div className="stat-card">
-          <h3>{totalPRs}</h3>
-          <p>Total PRs</p>
+          <h3>{uniqueOrgs}</h3>
+          <p>Organizations</p>
         </div>
         <div className="stat-card">
-          <h3>{securityPRs}</h3>
-          <p>Security PRs</p>
+          <h3>{totalPRs}</h3>
+          <p>Total PRs</p>
         </div>
         <div className="stat-card">
           <h3>{openPRs}</h3>

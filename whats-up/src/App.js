@@ -3,8 +3,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import './App.css';
 import Statistics from './components/Statistics';
-import TopSecurityPackages from './components/TopSecurityPackages';
-import SecurityPRsTable from './components/SecurityPRsTable';
+import PRsTable from './components/PRsTable';
 import DateRangeFilter from './components/DateRangeFilter';
 
 function App() {
@@ -66,7 +65,7 @@ function App() {
     <div className="App">
       <header className="app-header">
         <h1>Team Contributions Dashboard</h1>
-        <p>Track open source security contributions made by team members</p>
+        <p>Track open source contributions made by team members</p>
       </header>
       
       <main className="container">
@@ -77,8 +76,7 @@ function App() {
           onEndDateChange={setEndDate}
         />
         <Statistics prsData={filteredPRs} />
-        <TopSecurityPackages prsData={filteredPRs} />
-        <SecurityPRsTable prsData={filteredPRs} />
+        <PRsTable prsData={filteredPRs} />
       </main>
     </div>
   );
