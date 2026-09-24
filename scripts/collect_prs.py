@@ -353,7 +353,7 @@ def collect_prs(
     members: list[TeamMember],
     start_date: datetime,
     end_date: datetime,
-    classifier,
+    classifier=None,
 ) -> list[dict]:
     """
     Collect public PRs from team members within a given time period.
@@ -362,7 +362,8 @@ def collect_prs(
         members: List of team members
         start_date: Start date for PR search
         end_date: End date for PR search
-        token: GitHub API token (optional, uses GITHUB_TOKEN env var if not provided)
+        classifier: Zero-shot classifier used for security classification. If None,
+            no security classification is done and PRs are classified as "unknown".
 
     Returns:
         List of PR dictionaries
@@ -405,16 +406,19 @@ def collect_prs(
                 if f"{member}/".lower() in pr["repository_url"].lower():
                     continue  # Skip personal repos
 
-                if (
-                    "conda-forge/" in pr["repository_url"]
-                    and "-feedstock" in pr["repository_url"]
-                ):
-                    classification = classify_conda_forge_feedstock_fix(pr)
+                if classifier is None:
+                    classification = {"classification": "unknown"}
                 else:
-                    classification = classify_security_fix(pr, classifier)
-                print(
-                    f"PR: {pr['title']} - Classified as: {classification['classification']} (score: {classification['score']:.2f}). Evidence: {classification['evidence']}"
-                )
+                    if (
+                        "conda-forge/" in pr["repository_url"]
+                        and "-feedstock" in pr["repository_url"]
+                    ):
+                        classification = classify_conda_forge_feedstock_fix(pr)
+                    else:
+                        classification = classify_security_fix(pr, classifier)
+                    print(
+                        f"PR: {pr['title']} - Classified as: {classification['classification']} (score: {classification['score']:.2f}). Evidence: {classification['evidence']}"
+                    )
                 all_prs.append(
                     {
                         "author": member,
@@ -465,6 +469,12 @@ def main():
         metavar="YYYY-MM-DD",
         help="End date for PR search (inclusive, default: today)",
     )
+    parser.add_argument(
+        "--classify-security-fixes",
+        action="store_true",
+        help="Classify each PR as a security fix or not (default: disabled, "
+        "PRs are classified as 'unknown')",
+    )
 
     args = parser.parse_args()
 
@@ -481,10 +491,12 @@ def main():
     if end_date < start_date:
         parser.error(f"--end-date ({args.end_date}) must be after --start-date ({args.start_date})")
 
-    # Initialize zero-shot classifier
-    print("Loading zero-shot classification model...")
-    classifier = pipeline("zero-shot-classification", model="MoritzLaurer/ModernBERT-large-zeroshot-v2.0")
-    print("Model loaded!\n")
+    classifier = None
+    if args.classify_security_fixes:
+        # Initialize zero-shot classifier
+        print("Loading zero-shot classification model...")
+        classifier = pipeline("zero-shot-classification", model="MoritzLaurer/ModernBERT-large-zeroshot-v2.0")
+        print("Model loaded!\n")
 
     print(f"Collecting PRs from {start_date.date()} to {end_date.date()}")
     print()
@@ -503,21 +515,23 @@ def main():
         classification: 0 for classification in SECURITY_RELATED_CLASSIFICATIONS
     }
 
-    for pr in prs:
-        if pr["contribution_classification"] in SECURITY_RELATED_CLASSIFICATIONS:
-            security_related_prs += 1
-            security_fixes[pr["contribution_classification"]] += 1
-            print(
-                f"{pr['title']} ({pr['url']}) - Classified as: {pr['contribution_classification']}"
-            )
+    if args.classify_security_fixes:
+        for pr in prs:
+            if pr["contribution_classification"] in SECURITY_RELATED_CLASSIFICATIONS:
+                security_related_prs += 1
+                security_fixes[pr["contribution_classification"]] += 1
+                print(
+                    f"{pr['title']} ({pr['url']}) - Classified as: {pr['contribution_classification']}"
+                )
 
-    print(f"\nFound {security_related_prs} security-related PRs\n")
+        print(f"\nFound {security_related_prs} security-related PRs\n")
     print("\033[1mSummary:\033[0m")
     print(f"Total team members: {summary['members']}")
     print(f"Total PRs collected: {summary['total_prs']}")
-    print("Security-related PRs by classification:")
-    for classification, count in security_fixes.items():
-        print(f"  {classification}: {count}")
+    if args.classify_security_fixes:
+        print("Security-related PRs by classification:")
+        for classification, count in security_fixes.items():
+            print(f"  {classification}: {count}")
 
     if args.output:
         with open(args.output, "w") as f:
