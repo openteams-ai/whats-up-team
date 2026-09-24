@@ -5,6 +5,7 @@ import './App.css';
 import Statistics from './components/Statistics';
 import PRsTable from './components/PRsTable';
 import DateRangeFilter from './components/DateRangeFilter';
+import OrgFilter from './components/OrgFilter';
 
 function App() {
   const [prsData, setPrsData] = useState(null);
@@ -12,6 +13,7 @@ function App() {
   const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [selectedOrgs, setSelectedOrgs] = useState([]);
 
   useEffect(() => {
     const fetchPRs = async () => {
@@ -26,6 +28,7 @@ function App() {
           data = snapshot.docs.map((doc) => doc.data());
         }
         setPrsData(data);
+        setSelectedOrgs([...new Set(data.map((pr) => pr.org).filter(Boolean))].sort());
         const today = new Date();
         const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         setEndDate(today.toISOString().split('T')[0]);
@@ -40,12 +43,18 @@ function App() {
     fetchPRs();
   }, []);
 
+  const orgs = prsData
+    ? [...new Set(prsData.map((pr) => pr.org).filter(Boolean))].sort()
+    : [];
+
   const filteredPRs = prsData
     ? prsData.filter((pr) => {
         const prDate = new Date(pr.created_at);
         const start = new Date(startDate);
         const end = new Date(endDate);
-        return prDate >= start && prDate <= end;
+        const inDateRange = prDate >= start && prDate <= end;
+        const inSelectedOrgs = selectedOrgs.includes(pr.org);
+        return inDateRange && inSelectedOrgs;
       })
     : [];
 
@@ -69,12 +78,19 @@ function App() {
       </header>
       
       <main className="container">
-        <DateRangeFilter 
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-        />
+        <div className="filters">
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
+          <OrgFilter
+            orgs={orgs}
+            selectedOrgs={selectedOrgs}
+            onSelectedOrgsChange={setSelectedOrgs}
+          />
+        </div>
         <Statistics prsData={filteredPRs} />
         <PRsTable prsData={filteredPRs} />
       </main>

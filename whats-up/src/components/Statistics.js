@@ -2,7 +2,7 @@ import React from 'react';
 
 function Statistics({ prsData }) {
   const uniqueMembers = new Set(prsData.map(pr => pr.author)).size;
-  const uniqueOrgs = new Set(prsData.map(pr => pr.org).filter(Boolean)).size;
+  const orgs = [...new Set(prsData.map(pr => pr.org).filter(Boolean))].sort();
   const totalPRs = prsData.length;
   const openPRs = prsData.filter(pr => pr.state === 'open').length;
 
@@ -13,10 +13,6 @@ function Statistics({ prsData }) {
         <div className="stat-card">
           <h3>{uniqueMembers}</h3>
           <p>Team Members</p>
-        </div>
-        <div className="stat-card">
-          <h3>{uniqueOrgs}</h3>
-          <p>Organizations</p>
         </div>
         <div className="stat-card">
           <h3>{totalPRs}</h3>
