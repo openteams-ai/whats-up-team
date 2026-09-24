@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import requests
 from transformers import pipeline
@@ -30,6 +31,12 @@ def get_with_backoff(url, headers, params=None, max_retries=3):
         response.raise_for_status()
         return response
     return response
+
+@dataclass
+class TeamMember:
+    name: str
+    org: str
+
 
 GITHUB_HEADERS = {
     "Accept": "application/vnd.github.v3+json",
@@ -66,14 +73,17 @@ def get_github_headers() -> dict:
     return headers
 
 
-def load_team_members(filepath: str = "team.txt") -> list[str]:
-    """Load GitHub usernames from team.txt file."""
+def load_team_members(filepath: str = "team.json") -> list[TeamMember]:
+    """Load team members (GitHub username and org) from team.json file."""
     try:
         with open(filepath, "r") as f:
-            members = [line.strip() for line in f if line.strip()]
-        return members
+            data = json.load(f)
+        return [TeamMember(name=user["name"], org=user["org"]) for user in data.get("users", [])]
     except FileNotFoundError:
         print(f"Error: {filepath} not found")
+        sys.exit(1)
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"Error: invalid team file {filepath}: {e}")
         sys.exit(1)
 
 
@@ -340,7 +350,7 @@ def classify_conda_forge_feedstock_fix(pr: dict) -> dict:
 
 
 def collect_prs(
-    members: list[str],
+    members: list[TeamMember],
     start_date: datetime,
     end_date: datetime,
     classifier,
@@ -349,7 +359,7 @@ def collect_prs(
     Collect public PRs from team members within a given time period.
 
     Args:
-        members: List of GitHub usernames
+        members: List of team members
         start_date: Start date for PR search
         end_date: End date for PR search
         token: GitHub API token (optional, uses GITHUB_TOKEN env var if not provided)
@@ -363,8 +373,10 @@ def collect_prs(
     start_str = start_date.isoformat()
     end_str = end_date.isoformat()
 
-    for member in members:
-        print(f"Fetching PRs for {member}...")
+    for team_member in members:
+        member = team_member.name
+        org = team_member.org
+        print(f"Fetching PRs for {member} ({org})...")
 
         url = "https://api.github.com/search/issues"
         queries = [
@@ -406,6 +418,7 @@ def collect_prs(
                 all_prs.append(
                     {
                         "author": member,
+                        "org": org,
                         "title": pr["title"],
                         "body": pr["body"],
                         "url": pr["html_url"],
@@ -428,8 +441,8 @@ def main():
     )
     parser.add_argument(
         "--team-file",
-        default="team.txt",
-        help="Path to the team file containing GitHub usernames (default: team.txt)",
+        default="team.json",
+        help="Path to the team JSON file containing GitHub usernames and orgs (default: team.json)",
     )
     parser.add_argument(
         "--output",

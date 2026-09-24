@@ -3,5 +3,6 @@
 !.pixi/config.toml
 
 team.txt
+team.json
 *prs.json
 .env

@@ -12,18 +12,19 @@ Running the scripts will populate a local file called `prs.json` which will cont
 
 There are two steps required to see what contributions a team has been up to.
 
-#### 1. populate a team.txt file.
+#### 1. create a `team.json` file.
 
-This can be done manually by writing out a list of all the github user names you want to check. For example:
-
-```
-$ echo "soapy1" > team.txt
-```
-
-Or, to get all the OpenTeams engineering team run the pixi task:
+This can be done manually by writing out a list of all the github user names and org that the user belongs to. The file should follow the scheme:
 
 ```
-$ pixi run find-my-team
+{
+    "users": [
+        {
+            "name": "user-name"
+            "org": "users-organization"
+        },
+    ]
+}
 ```
 
 #### 2. collect prs.
