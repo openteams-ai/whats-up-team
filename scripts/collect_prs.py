@@ -381,8 +381,8 @@ def collect_prs(
 
         url = "https://api.github.com/search/issues"
         queries = [
-            f"author:{member} is:pr is:open created:{start_str}..{end_str}",
-            f"author:{member} is:pr is:merged created:{start_str}..{end_str}",
+            f"author:{member} is:pr is:public is:open created:{start_str}..{end_str}",
+            f"author:{member} is:pr is:public is:merged created:{start_str}..{end_str}",
         ]
 
         try:
