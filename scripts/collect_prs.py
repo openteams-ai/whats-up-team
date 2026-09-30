@@ -406,13 +406,15 @@ def collect_prs(
                 if f"{member}/".lower() in pr["repository_url"].lower():
                     continue  # Skip personal repos
 
+                repo_owner, repo_name = pr["repository_url"].split("/")[-2:]
+                is_feedstock_pr = repo_owner.lower() == "conda-forge" and repo_name.endswith(
+                    "-feedstock"
+                )
+
                 if classifier is None:
                     classification = {"classification": "unknown"}
                 else:
-                    if (
-                        "conda-forge/" in pr["repository_url"]
-                        and "-feedstock" in pr["repository_url"]
-                    ):
+                    if is_feedstock_pr:
                         classification = classify_conda_forge_feedstock_fix(pr)
                     else:
                         classification = classify_security_fix(pr, classifier)
@@ -426,7 +428,8 @@ def collect_prs(
                         "title": pr["title"],
                         "body": pr["body"],
                         "url": pr["html_url"],
-                        "repository": f"{pr["repository_url"].split("/")[-2]}/{pr["repository_url"].split("/")[-1]}",
+                        "repository": f"{repo_owner}/{repo_name}",
+                        "is_feedstock_pr": is_feedstock_pr,
                         "created_at": pr["created_at"],
                         "state": pr["state"],
                         "contribution_classification": classification["classification"],
